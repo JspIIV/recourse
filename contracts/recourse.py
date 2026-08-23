@@ -164,7 +164,8 @@ Reply with bare JSON and nothing else:
 {{"ruling": "{RELEASE}" or "{REFUND}", "reason": "one or two sentences citing the brief and the delivery"}}"""
 
 
-class _Recipient(gl.evm.contract_interface):
+@gl.evm.contract_interface
+class _Recipient:
     """A plain address to pay. Value transfers work on Studionet; on
     testnet-asimov the message is formed correctly and the chain never runs it,
     which is why this contract lives where the money actually moves."""

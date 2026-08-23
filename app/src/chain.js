@@ -7,7 +7,7 @@
 import { createClient } from 'genlayer-js';
 import { studionet } from 'genlayer-js/chains';
 
-export const RECOURSE = '0xcE4c7B074740830E85022F329231A8CF22707d23';
+export const RECOURSE = '0xc7aAce456c1B040DA82D97cc26aDe0703A8824a3';
 export const REPO = 'https://github.com/JspIIV/recourse';
 export const CHAIN_ID_HEX = '0xf22f'; // studionet
 
