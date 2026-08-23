@@ -12,5 +12,6 @@
       "address": "0xcE4c7B074740830E85022F329231A8CF22707d23",
       "reason": "gl.evm.contract_interface was used as a base class rather than a decorator, so the module never imported and the deployment produced no contract while reporting success"
     }
-  ]
+  ],
+  "verified": "One job end to end: 0.1 GEN locked, a delivery that did not meet the brief, the client contested, the round ruled REFUND, and the client's balance went 667.9000 to 668.0000 GEN while the worker's did not move and the escrow emptied to zero. A dispute from a non-client account was refused on chain."
 }
