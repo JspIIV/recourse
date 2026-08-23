@@ -7,7 +7,7 @@ import '@fontsource-variable/inter';
 import '@fontsource/jetbrains-mono';
 import './style.css';
 import {
-  RECOURSE, REPO, accept, connect, dispute, deliver, hasWallet, openJob, read, settle,
+  RECOURSE, REPO, accept, balanceOf, connect, dispute, deliver, hasWallet, openJob, read, settle,
 } from './chain.js';
 
 const el = (id) => document.getElementById(id);
@@ -33,7 +33,26 @@ async function ensureAccount(say) {
   if (account) return account;
   say('waiting for the wallet…');
   account = await connect();
+  await showAccount();
   return account;
+}
+
+// The header has to say whether you are connected and with how much, because
+// every action on this page either spends money or decides where money goes,
+// and finding that out by pressing a button is the wrong moment to learn it.
+async function showAccount() {
+  const button = el('connect');
+  if (!account) {
+    button.textContent = hasWallet() ? 'Connect wallet' : 'No wallet found';
+    button.disabled = !hasWallet();
+    return;
+  }
+  button.textContent = short(account);
+  try {
+    const wei = await balanceOf(account);
+    button.textContent = `${short(account)} · ${gen(wei)}`;
+  } catch { /* the address alone is still worth showing */ }
+  await loadJobs();
 }
 
 // ------------------------------------------------------------------ rendering
@@ -162,6 +181,15 @@ el('example').onclick = () => {
   el('title').value = EXAMPLE.title;
   el('asked').value = EXAMPLE.asked;
 };
+
+el('connect').onclick = async () => {
+  try {
+    await ensureAccount((t) => { el('connect').textContent = t; });
+  } catch (e) {
+    el('connect').textContent = Number(e?.code) === 4001 ? 'Cancelled' : 'Connect wallet';
+  }
+};
+showAccount();
 
 el('year').textContent = new Date().getFullYear();
 // Plain text, not a link: an explorer that answers "not found" for these
