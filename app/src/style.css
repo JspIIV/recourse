@@ -1,0 +1,161 @@
+/* Warrant.
+ *
+ * A record of permissions, set like one: light, centred headings, one accent
+ * used only where something was refused. The policy text and the reasons are
+ * the part anyone actually reads, so everything else stays out of their way. */
+
+:root {
+  --ink: #0c0e13;
+  --ink-2: #39404e;
+  --ink-3: #6c7382;
+  --ink-4: #99a0ad;
+  --line: #e4e7ee;
+  --line-2: #eef0f5;
+  --ground: #f6f7fa;
+  --panel: #ffffff;
+  --bad: #ad2318;
+  --bad-soft: #fdf2f1;
+  --bad-line: #f3cdc9;
+  --good: #0d6340;
+  --good-soft: #f0f8f3;
+  --good-line: #c9e4d5;
+  --accent: #110fff;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0; background: var(--ground); color: var(--ink);
+  font-family: 'Inter Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 15px; line-height: 1.65; -webkit-font-smoothing: antialiased;
+}
+code { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: .86em; }
+.wrap { max-width: 940px; margin: 0 auto; padding: 0 26px; }
+
+/* header */
+.top { background: var(--panel); border-bottom: 1px solid var(--line); }
+.top .wrap { display: flex; align-items: center; justify-content: space-between;
+  gap: 18px; height: 66px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit; }
+.brand .glyph { width: 26px; height: 26px; border-radius: 7px; flex: none;
+  background: linear-gradient(140deg, var(--ink), #3a3f4d); position: relative; }
+.brand .glyph::after { content: ''; position: absolute; inset: 7px 8px;
+  border-top: 2px solid #fff; border-bottom: 2px solid #fff; opacity: .9; }
+.brand b { display: block; font-size: 16.5px; font-weight: 650; letter-spacing: -.02em; }
+.brand i { display: block; font-style: normal; font-size: 12px; color: var(--ink-3); line-height: 1.3; }
+.top nav { display: flex; align-items: center; gap: 18px; font-size: 12.5px; color: var(--ink-3); }
+.top nav code { color: var(--ink-2); }
+.top nav a { color: var(--accent); text-decoration: none; font-weight: 500; }
+.top nav a:hover { text-decoration: underline; }
+
+/* hero */
+.hero { background: var(--panel); border-bottom: 1px solid var(--line);
+  padding: 56px 0 40px; text-align: center; }
+.hero h2 { margin: 0 0 12px; font-size: 33px; line-height: 1.15;
+  letter-spacing: -.035em; font-weight: 650; }
+.hero p { margin: 0 auto; max-width: 58ch; color: var(--ink-3); font-size: 15.5px; }
+.counts { display: flex; justify-content: center; gap: 12px; margin-top: 32px; flex-wrap: wrap; }
+.stat { min-width: 132px; padding: 15px 20px; border: 1px solid var(--line);
+  border-radius: 12px; background: var(--ground); }
+.stat b { display: block; font-size: 25px; font-weight: 650; letter-spacing: -.03em; line-height: 1.2; }
+.stat i { display: block; font-style: normal; font-size: 11.5px; text-transform: uppercase;
+  letter-spacing: .1em; color: var(--ink-3); margin-top: 2px; }
+.stat.good b { color: var(--good); }
+.stat.bad b { color: var(--bad); }
+
+/* sections */
+main { padding-bottom: 40px; }
+section { margin-top: 58px; }
+h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .13em;
+  color: var(--ink-3); font-weight: 650; margin: 0 0 8px; text-align: center; }
+.sub { margin: 0 auto 22px; color: var(--ink-3); font-size: 13.5px;
+  max-width: 62ch; text-align: center; }
+.prose { max-width: 64ch; margin: 0 auto; }
+.prose p { margin: 0 0 15px; color: var(--ink-2); }
+.prose p:last-child { margin-bottom: 0; }
+.prose b { color: var(--ink); font-weight: 600; }
+.prose em { font-style: normal; font-weight: 600; color: var(--ink); }
+.prose code { background: var(--line-2); padding: 1px 6px; border-radius: 4px; color: var(--ink-2); }
+.note { border-top: 1px solid var(--line); padding-top: 44px; }
+
+/* cards */
+.cards { display: grid; gap: 12px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 13px;
+  padding: 18px 20px; box-shadow: 0 1px 2px rgba(12, 14, 19, .03); }
+.card header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+.card footer { display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  font-size: 12px; color: var(--ink-3); border-top: 1px solid var(--line-2);
+  padding-top: 12px; margin-top: 14px; }
+.pill { font-size: 11px; letter-spacing: .06em; text-transform: uppercase;
+  background: var(--ground); border: 1px solid var(--line); border-radius: 20px; padding: 2px 10px;
+  color: var(--ink-3); }
+.pill.open { background: var(--good-soft); border-color: var(--good-line); color: var(--good); }
+.digest code { color: var(--ink-4); }
+
+.policy .name { font-size: 15.5px; font-weight: 620; letter-spacing: -.01em; }
+.policy .text { margin: 0; color: var(--ink-2); font-size: 14.5px; }
+
+.decision.good { border-left: 3px solid var(--good); }
+.decision.bad { border-left: 3px solid var(--bad); background: var(--bad-soft); }
+.decision .verdict { font-size: 14px; font-weight: 650; }
+.decision.good .verdict { color: var(--good); }
+.decision.bad .verdict { color: var(--bad); }
+.decision .who { font-size: 12px; color: var(--ink-3); }
+.decision .action { margin: 0 0 6px; color: var(--ink); font-weight: 500; }
+.decision .context { margin: 0 0 8px; color: var(--ink-3); font-size: 13.5px; }
+.decision .reason { margin: 0; color: var(--ink-2); font-size: 14px; }
+.card.muted p { margin: 0; color: var(--ink-2); font-size: 14px; }
+
+/* the form */
+form { max-width: 660px; margin: 0 auto; display: grid; gap: 14px; }
+label { display: grid; gap: 6px; font-size: 12.5px; color: var(--ink-3); }
+input[type="text"], textarea, select {
+  padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px;
+  background: var(--panel); font: inherit; font-size: 14.5px; color: var(--ink);
+  box-shadow: 0 1px 2px rgba(12, 14, 19, .04); width: 100%; resize: vertical;
+}
+input:focus, textarea:focus, select:focus {
+  outline: none; border-color: var(--ink); box-shadow: 0 0 0 3px rgba(12, 14, 19, .07);
+}
+button { padding: 12px 22px; border: 0; border-radius: 10px; background: var(--ink);
+  color: #fff; font: inherit; font-size: 14.5px; font-weight: 550; cursor: pointer; }
+button:hover { background: #242833; }
+button:disabled { background: var(--ink-4); cursor: default; }
+button.ghost { background: transparent; color: var(--ink-3); border: 1px solid var(--line); }
+button.ghost:hover { background: var(--panel); color: var(--ink); }
+.act { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 4px; }
+.hint { color: var(--ink-3); font-size: 13px; }
+
+.loading, .empty, .error { color: var(--ink-3); font-size: 14px; margin: 0;
+  padding: 16px 0; text-align: center; }
+.error { color: var(--bad); }
+
+footer { border-top: 1px solid var(--line); margin-top: 58px; background: var(--panel); }
+footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  padding-top: 24px; padding-bottom: 24px; font-size: 12.5px; color: var(--ink-3); }
+
+@media (max-width: 640px) {
+  .wrap { padding: 0 18px; }
+  .hero { padding: 40px 0 30px; }
+  .hero h2 { font-size: 25px; }
+  .stat { min-width: 0; flex: 1 1 40%; }
+}
+
+/* Recourse additions: a job card, and the money on it. */
+.job .fee { font-size: 13px; font-weight: 600; }
+.job .pill.open { background: var(--good-soft); border-color: var(--good-line); color: var(--good); }
+.job h4 { font-size: 15.5px; font-weight: 620; letter-spacing: -.01em; margin: 0 0 6px; }
+.job .asked { margin: 0 0 10px; color: var(--ink-2); font-size: 14px; }
+.job .delivered, .job .complaint, .job .reason {
+  margin: 0 0 8px; font-size: 13.5px; color: var(--ink-2);
+  border-left: 2px solid var(--line); padding-left: 12px;
+}
+.job .reason { border-left-color: var(--ink-3); }
+.job.good { border-left: 3px solid var(--good); }
+.job.bad { border-left: 3px solid var(--bad); background: var(--bad-soft); }
+.job.warn { border-left: 3px solid #b8860b; }
+.job.good .verdict { color: var(--good); }
+.job.bad .verdict { color: var(--bad); }
+.job .verdict { font-size: 13px; font-weight: 650; letter-spacing: .04em; }
+.job footer button { padding: 6px 14px; font-size: 12.5px; border-radius: 8px; }
+.job .state { margin: 10px 0 0; }

@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Recourse</title>
+<meta name="description" content="An escrow where contesting the work actually moves the money: the consensus round's ruling is the payout, not a note beside it." />
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="./">
+      <span class="glyph" aria-hidden="true"></span>
+      <span><b>Recourse</b><i>An escrow that can rule against you</i></span>
+    </a>
+    <nav>
+      <span class="addr">contract <code id="address"></code></span>
+      <a id="repo" href="#">source</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <h2>The verdict is the payout.</h2>
+    <p>A client locks a fee. A worker delivers. If the client contests it, the brief, the delivery
+      and the complaint go to one consensus round, and the money follows whichever way it rules.
+      Nobody here confirms the result afterwards.</p>
+    <div id="counts" class="counts"><span class="stat"><b>…</b><i>loading</i></span></div>
+  </div>
+</section>
+
+<main class="wrap">
+
+  <section>
+    <h3>Open a job</h3>
+    <p class="sub">The fee leaves your wallet and sits in the contract until the job is accepted or
+      ruled on. This is the only action that carries value.</p>
+    <form id="open">
+      <label>Worker address
+        <input id="worker" type="text" autocomplete="off" placeholder="0x…" />
+      </label>
+      <label>Title
+        <input id="title" type="text" autocomplete="off" placeholder="Summarise the escrow contract" />
+      </label>
+      <label>What you are asking for
+        <textarea id="asked" rows="3" placeholder="Read the escrow contract and list, in plain sentences, every path by which money can leave it and who is allowed to trigger each one."></textarea>
+      </label>
+      <label>Fee in GEN
+        <input id="fee" type="text" autocomplete="off" value="0.1" />
+      </label>
+      <div class="act">
+        <button type="submit" id="openbtn">Lock the fee and open</button>
+        <button type="button" id="example" class="ghost">Fill in an example</button>
+        <span id="openstate" class="hint"></span>
+      </div>
+    </form>
+  </section>
+
+  <section>
+    <h3>Jobs</h3>
+    <p class="sub">Everything here is read from the chain. The escrow column is what the contract is
+      actually holding for that job, not what it was told to hold.</p>
+    <div id="jobs" class="cards"><p class="loading">Reading the chain…</p></div>
+  </section>
+
+  <section class="note">
+    <h3>What makes this different from a verdict on a screen</h3>
+    <div class="prose">
+      <p><b>The ruling moves the fee.</b> Plenty of marketplaces will show you an AI verdict on a
+        dispute. Almost none let it touch the funds, because the moment it does, every weakness in
+        it costs somebody real money. A verdict that changes nothing is a decoration.</p>
+      <p><b>One field goes to consensus.</b> RELEASE or REFUND. The amounts are never asked: the
+        contract computes them, because asking a model to divide a fee is asking witnesses to agree
+        on arithmetic the contract can do exactly and for free.</p>
+      <p><b>An unreadable round settles nothing.</b> Not a default and not a coin flip. The job
+        stays disputed and can be put to the network again. A default would be a decision nobody
+        made, taken with somebody else's money.</p>
+      <p><b>The complaint is not evidence.</b> The prompt says so: it is the client's account, and
+        if it describes a fault that is not actually in the delivery, that alone is reason to
+        release. Otherwise a client could win by complaining loudly.</p>
+      <p><b>This runs on Studionet, deliberately.</b> On testnet-asimov <code>emit_transfer</code>
+        records a payout and leaves balances untouched, measured across two deployments. A contract
+        whose whole point is that money moves cannot demonstrate it there.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Recourse · <span id="year"></span></span>
+    <span>GenLayer Studionet</span>
+  </div>
+</footer>
+
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>
