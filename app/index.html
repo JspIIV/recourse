@@ -51,6 +51,12 @@
       <label>Fee in GEN
         <input id="fee" type="text" autocomplete="off" value="0.1" />
       </label>
+      <label>Deliver within, seconds
+        <input id="deliverwin" type="text" autocomplete="off" placeholder="604800" />
+      </label>
+      <label>Review window, seconds
+        <input id="reviewwin" type="text" autocomplete="off" placeholder="604800" />
+      </label>
       <div class="act">
         <button type="submit" id="openbtn">Lock the fee and open</button>
         <button type="button" id="example" class="ghost">Fill in an example</button>
@@ -75,6 +81,14 @@
       <p><b>One field goes to consensus.</b> RELEASE or REFUND. The amounts are never asked: the
         contract computes them, because asking a model to divide a fee is asking witnesses to agree
         on arithmetic the contract can do exactly and for free.</p>
+      <p><b>Nobody's money is locked without a way out.</b> If the worker never delivers, the
+        client reclaims the fee after the delivery deadline. If the client never answers a delivery,
+        the worker claims it after the review window. Both are enforced by the chain rather than by
+        anybody's agreement, so a party who walks away cannot freeze somebody else's money.</p>
+      <p><b>The deliverable is pinned.</b> A delivery can carry a URI and a digest computed off
+        chain, recorded in the same transaction. The contract cannot fetch it, and a round that
+        tried would time out on this validator set, so it does the one thing it can: it fixes what
+        was handed in, so the thing being argued about cannot be swapped afterwards.</p>
       <p><b>An unreadable round settles nothing.</b> Not a default and not a coin flip. The job
         stays disputed and can be put to the network again. A default would be a decision nobody
         made, taken with somebody else's money.</p>

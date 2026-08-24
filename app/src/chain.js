@@ -7,7 +7,7 @@
 import { createClient } from 'genlayer-js';
 import { studionet } from 'genlayer-js/chains';
 
-export const RECOURSE = '0xc7aAce456c1B040DA82D97cc26aDe0703A8824a3';
+export const RECOURSE = '0x52BB8898a9fB322dD89145B031c14f4231E748D9';
 export const REPO = 'https://github.com/JspIIV/recourse';
 export const CHAIN_ID_HEX = '0xf22f'; // studionet
 
@@ -98,14 +98,24 @@ const writer = (account) => createClient({
   chain: studionet, account, provider: walletFriendly(window.ethereum),
 });
 
-export const openJob = (account, worker, title, askedFor, feeWei) =>
+export const openJob = (account, worker, title, askedFor, feeWei, deliverWin, reviewWin) =>
   writer(account).writeContract({
-    address: RECOURSE, functionName: 'open_job', args: [worker, title, askedFor],
+    address: RECOURSE, functionName: 'open_job',
+    args: [worker, title, askedFor, String(deliverWin || ''), String(reviewWin || '')],
     value: feeWei, gas: GAS,
   });
 
-export const deliver = (account, jobId, delivery) => writer(account).writeContract({
-  address: RECOURSE, functionName: 'deliver', args: [String(jobId), delivery],
+export const reclaim = (account, jobId) => writer(account).writeContract({
+  address: RECOURSE, functionName: 'reclaim', args: [String(jobId)], value: 0n, gas: GAS,
+});
+
+export const claim = (account, jobId) => writer(account).writeContract({
+  address: RECOURSE, functionName: 'claim', args: [String(jobId)], value: 0n, gas: GAS,
+});
+
+export const deliver = (account, jobId, delivery, uri, digest) => writer(account).writeContract({
+  address: RECOURSE, functionName: 'deliver',
+  args: [String(jobId), delivery, String(uri || ''), String(digest || '')],
   value: 0n, gas: GAS,
 });
 

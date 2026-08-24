@@ -7,7 +7,8 @@ import '@fontsource-variable/inter';
 import '@fontsource/jetbrains-mono';
 import './style.css';
 import {
-  RECOURSE, REPO, accept, balanceOf, connect, dispute, deliver, hasWallet, openJob, read, settle,
+  RECOURSE, REPO, accept, balanceOf, claim, connect, dispute, deliver, hasWallet, openJob,
+  read, reclaim, settle,
 } from './chain.js';
 
 const el = (id) => document.getElementById(id);
@@ -82,6 +83,8 @@ function jobCard(j) {
         ${mine && j.status === 'DELIVERED' ? `<button class="act-accept" data-id="${j.id}">Accept and pay</button>` : ''}
         ${mine && (j.status === 'DELIVERED' || j.status === 'DISPUTED')
     ? `<button class="act-dispute" data-id="${j.id}">Contest it</button>` : ''}
+        ${mine && j.status === 'OPEN' ? `<button class="act-reclaim" data-id="${j.id}">Reclaim the fee</button>` : ''}
+        ${isWorker && j.status === 'DELIVERED' ? `<button class="act-claim" data-id="${j.id}">Claim the fee</button>` : ''}
       </footer>
       <p class="state hint" id="state-${j.id}"></p>
     </article>`;
@@ -113,9 +116,10 @@ function wire() {
     b.onclick = () => run(b.dataset.id, async (id, say) => {
       const text = window.prompt('What are you delivering?');
       if (!text) return null;
+      const digest = window.prompt('Digest of the deliverable, optional') || '';
       const who = await ensureAccount(say);
       say('sending the delivery…');
-      return deliver(who, id, text);
+      return deliver(who, id, text, '', digest);
     });
   });
   document.querySelectorAll('.act-accept').forEach((b) => {
@@ -123,6 +127,20 @@ function wire() {
       const who = await ensureAccount(say);
       say('paying the worker…');
       return accept(who, id);
+    });
+  });
+  document.querySelectorAll('.act-reclaim').forEach((b) => {
+    b.onclick = () => run(b.dataset.id, async (id, say) => {
+      const who = await ensureAccount(say);
+      say('reclaiming…');
+      return reclaim(who, id);
+    });
+  });
+  document.querySelectorAll('.act-claim').forEach((b) => {
+    b.onclick = () => run(b.dataset.id, async (id, say) => {
+      const who = await ensureAccount(say);
+      say('claiming…');
+      return claim(who, id);
     });
   });
   document.querySelectorAll('.act-dispute').forEach((b) => {
@@ -166,7 +184,8 @@ el('open').onsubmit = async (event) => {
     const who = await ensureAccount(say);
     const wei = BigInt(Math.round(feeGen * 1e18));
     say(`locking ${feeGen} GEN…`);
-    const hash = await openJob(who, worker, title, asked, wei);
+    const hash = await openJob(who, worker, title, asked, wei,
+      el('deliverwin').value.trim(), el('reviewwin').value.trim());
     const done = await settle(hash, say);
     say(done.ok ? 'opened' : done.reason);
     await loadJobs();

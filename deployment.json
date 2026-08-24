@@ -2,7 +2,7 @@
   "name": "Recourse",
   "contract": "contracts/recourse.py",
   "class": "Recourse",
-  "address": "0xc7aAce456c1B040DA82D97cc26aDe0703A8824a3",
+  "address": "0x52BB8898a9fB322dD89145B031c14f4231E748D9",
   "network": "GenLayer Studionet",
   "rpc": "https://studio.genlayer.com/api",
   "app": "https://recourse-escrow.vercel.app",
@@ -11,6 +11,10 @@
     {
       "address": "0xcE4c7B074740830E85022F329231A8CF22707d23",
       "reason": "gl.evm.contract_interface was used as a base class rather than a decorator, so the module never imported and the deployment produced no contract while reporting success"
+    },
+    {
+      "address": "0xc7aAce456c1B040DA82D97cc26aDe0703A8824a3",
+      "reason": "no deadlines and no recovery paths: a party who stopped participating could freeze the fee forever, and a delivery was party-authored text pinned to nothing"
     }
   ],
   "verified": "One job end to end: 0.1 GEN locked, a delivery that did not meet the brief, the client contested, the round ruled REFUND, and the client's balance went 667.9000 to 668.0000 GEN while the worker's did not move and the escrow emptied to zero. A dispute from a non-client account was refused on chain."

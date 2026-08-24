@@ -31,6 +31,19 @@ recorded and never compared, because two honest readers word it differently.
 divide a fee is asking it to do arithmetic in front of witnesses who must all
 agree on the result, when the contract can do it exactly and for free.
 
+Nobody's money is locked without a way out
+------------------------------------------
+
+Every job carries two deadlines, and both are enforced by the chain rather than
+by anybody's agreement. If the worker never delivers, the client calls `reclaim`
+after the delivery deadline and takes the fee back. If the client never answers a
+delivery, the worker calls `claim` after the review window and takes it. A party
+who walks away can no longer freeze somebody else's money, and doing nothing
+after a delivery is treated as what it is: a choice to accept.
+
+Time is deterministic here, so a deadline costs no agreement: every validator
+sees the same transaction timestamp.
+
 The four rules that keep money safe
 -----------------------------------
 
@@ -69,6 +82,8 @@ ACCEPTED = "ACCEPTED"
 DISPUTED = "DISPUTED"
 RELEASED = "RELEASED"
 REFUNDED = "REFUNDED"
+RECLAIMED = "RECLAIMED"   # the worker never delivered and the deadline passed
+UNCONTESTED = "UNCONTESTED"  # the client never answered and the window closed
 
 # The one field the validators must agree on.
 RELEASE = "RELEASE"
@@ -77,10 +92,36 @@ REFUND = "REFUND"
 MAX_TEXT = 2000
 MAX_TITLE = 120
 MAX_REASON = 400
+MAX_URI = 300
+
+# Deadlines are in seconds so that the recovery paths can be demonstrated in a
+# test rather than described. A real job would use days; the floor is a minute
+# and the ceiling ninety days, which keeps a client from opening a job nobody
+# could ever deliver against and from locking a fee for a decade.
+MIN_WINDOW = 60
+MAX_WINDOW = 90 * 24 * 60 * 60
+DEFAULT_WINDOW = 7 * 24 * 60 * 60
 
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def _now_epoch() -> int:
+    """Deterministic on this network: every validator sees the transaction
+    timestamp, so a deadline computed from it is the same for all of them and
+    costs no agreement."""
+    return int(datetime.now(timezone.utc).timestamp())
+
+
+def _window(value, fallback: int) -> int:
+    """A window in seconds, clamped. Never raises: this is reached from a
+    payable method, where raising strands the caller's fee."""
+    try:
+        seconds = int(str(value).strip())
+    except Exception:
+        return fallback
+    return max(MIN_WINDOW, min(MAX_WINDOW, seconds))
 
 
 def _addr(address) -> str:
@@ -212,7 +253,8 @@ class Recourse(gl.Contract):
     # ------------------------------------------------------------------ write
 
     @gl.public.write.payable
-    def open_job(self, worker: str, title: str, asked_for: str) -> str:
+    def open_job(self, worker: str, title: str, asked_for: str,
+                 deliver_seconds: str = "", review_seconds: str = "") -> str:
         """Lock a fee against a brief, for a named worker.
 
         Payable, so it never raises: a bad call is refused by returning the
@@ -235,6 +277,9 @@ class Recourse(gl.Contract):
         if worker_address == client:
             return self._refuse_payable("a client cannot hire themselves")
 
+        now = _now_epoch()
+        deliver_by = now + _window(deliver_seconds, DEFAULT_WINDOW)
+
         job_id = str(len(self.jobs))
         self.jobs.append(json.dumps({
             "id": job_id,
@@ -245,18 +290,36 @@ class Recourse(gl.Contract):
             "fee_wei": str(value),
             "status": OPEN,
             "delivered": "",
+            "artifact_uri": "",
+            "artifact_digest": "",
             "complaint": "",
             "ruling": "",
             "reason": "",
             "opened_at": _now_iso(),
+            # Nobody's money is locked without a way out. If the worker never
+            # delivers, the client can reclaim after this; if the client never
+            # answers a delivery, the worker can claim after the review window.
+            "deliver_by_epoch": deliver_by,
+            "review_seconds": _window(review_seconds, DEFAULT_WINDOW),
+            "review_by_epoch": 0,
             "settled_at": "",
         }))
         self.escrow[job_id] = u256(value)
         return json.dumps({"ok": True, "id": job_id, "fee_wei": str(value)})
 
     @gl.public.write
-    def deliver(self, job_id: str, delivery: str) -> str:
-        """The worker hands in the work."""
+    def deliver(self, job_id: str, delivery: str,
+                artifact_uri: str = "", artifact_digest: str = "") -> str:
+        """The worker hands in the work, and pins what was handed in.
+
+        `artifact_digest` is a hash of the deliverable computed off chain. The
+        contract cannot fetch the artifact, and a round that tried would time
+        out on this validator set, so it does the one thing it can: it records
+        the digest at delivery time, in the same transaction, and shows it
+        beside the ruling. That does not prove the work is good. It does mean
+        the thing being argued about cannot be swapped afterwards, which is the
+        part a dispute over party-authored text cannot survive without.
+        """
         index = self._job(job_id)
         if index is None:
             return json.dumps({"ok": False, "error": "no such job"})
@@ -267,14 +330,25 @@ class Recourse(gl.Contract):
         if job["status"] != OPEN:
             return json.dumps({"ok": False, "error": "this job is not open"})
 
+        now = _now_epoch()
+        if now > int(job.get("deliver_by_epoch", 0)):
+            return json.dumps({
+                "ok": False,
+                "error": "the delivery deadline has passed; the client may reclaim the fee",
+            })
+
         text = _clip(delivery, MAX_TEXT)
         if len(text) < 1:
             return json.dumps({"ok": False, "error": "a delivery cannot be empty"})
 
         job["delivered"] = text
+        job["artifact_uri"] = _clip(artifact_uri, MAX_URI)
+        job["artifact_digest"] = _clip(artifact_digest, 80)
         job["status"] = DELIVERED
+        job["review_by_epoch"] = now + int(job.get("review_seconds", DEFAULT_WINDOW))
         self.jobs[index] = json.dumps(job)
-        return json.dumps({"ok": True, "id": job["id"], "status": DELIVERED})
+        return json.dumps({"ok": True, "id": job["id"], "status": DELIVERED,
+                           "review_by_epoch": job["review_by_epoch"]})
 
     @gl.public.write
     def accept(self, job_id: str) -> str:
@@ -313,6 +387,11 @@ class Recourse(gl.Contract):
             return json.dumps({"ok": False, "error": "only the client can dispute"})
         if job["status"] not in (DELIVERED, DISPUTED):
             return json.dumps({"ok": False, "error": "there is nothing to dispute"})
+        if job["status"] == DELIVERED and _now_epoch() > int(job.get("review_by_epoch", 0)):
+            return json.dumps({
+                "ok": False,
+                "error": "the review window has closed; the worker may claim the fee",
+            })
 
         said = _clip(complaint, MAX_TEXT) or job["complaint"]
         if len(said) < 10:
@@ -328,6 +407,14 @@ class Recourse(gl.Contract):
         title = str(job["title"])
         asked = str(job["asked_for"])
         delivered = str(job["delivered"])
+        digest = str(job.get("artifact_digest", ""))
+        uri = str(job.get("artifact_uri", ""))
+        if digest:
+            pinned = "[the deliverable was pinned at delivery time: "
+            if uri:
+                pinned += uri + " "
+            pinned += "digest " + digest + "]"
+            delivered = delivered + chr(10) + chr(10) + pinned
         task = _task(title, asked, delivered, said)
 
         def run() -> str:
@@ -361,6 +448,63 @@ class Recourse(gl.Contract):
         job = json.loads(self.jobs[index])
         return self._settle(index, job, ruling, _read_reason(raw),
                             RELEASED if ruling == RELEASE else REFUNDED)
+
+    @gl.public.write
+    def reclaim(self, job_id: str) -> str:
+        """The worker never delivered. The client takes the fee back.
+
+        Deterministic and permissionless in timing: nobody has to agree that a
+        deadline passed, the chain already knows. Without this a worker who
+        walks away locks the client's money forever, which is the failure a
+        reviewer rightly called out.
+        """
+        index = self._job(job_id)
+        if index is None:
+            return json.dumps({"ok": False, "error": "no such job"})
+        job = json.loads(self.jobs[index])
+
+        if _addr(gl.message.sender_address.as_hex) != job["client"]:
+            return json.dumps({"ok": False, "error": "only the client can reclaim"})
+        if job["status"] != OPEN:
+            return json.dumps({"ok": False, "error": "this job is not waiting on a delivery"})
+        remaining = int(job.get("deliver_by_epoch", 0)) - _now_epoch()
+        if remaining > 0:
+            return json.dumps({
+                "ok": False,
+                "error": "the delivery deadline has not passed",
+                "seconds_remaining": remaining,
+            })
+
+        return self._settle(index, job, REFUND,
+                            "the delivery deadline passed with nothing delivered", RECLAIMED)
+
+    @gl.public.write
+    def claim(self, job_id: str) -> str:
+        """The client never answered a delivery. The worker takes the fee.
+
+        The mirror of reclaim, and the reason a client cannot freeze a fee by
+        going quiet: doing nothing after a delivery is a choice, and after the
+        review window it is the choice to accept.
+        """
+        index = self._job(job_id)
+        if index is None:
+            return json.dumps({"ok": False, "error": "no such job"})
+        job = json.loads(self.jobs[index])
+
+        if _addr(gl.message.sender_address.as_hex) != job["worker"]:
+            return json.dumps({"ok": False, "error": "only the worker can claim"})
+        if job["status"] != DELIVERED:
+            return json.dumps({"ok": False, "error": "this job is not waiting on the client"})
+        remaining = int(job.get("review_by_epoch", 0)) - _now_epoch()
+        if remaining > 0:
+            return json.dumps({
+                "ok": False,
+                "error": "the client still has time to accept or contest",
+                "seconds_remaining": remaining,
+            })
+
+        return self._settle(index, job, RELEASE,
+                            "the review window closed with no answer from the client", UNCONTESTED)
 
     # ----------------------------------------------------------------- paying
 
