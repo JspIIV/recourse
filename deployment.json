@@ -17,5 +17,5 @@
       "reason": "no deadlines and no recovery paths: a party who stopped participating could freeze the fee forever, and a delivery was party-authored text pinned to nothing"
     }
   ],
-  "verified": "One job end to end: 0.1 GEN locked, a delivery that did not meet the brief, the client contested, the round ruled REFUND, and the client's balance went 667.9000 to 668.0000 GEN while the worker's did not move and the escrow emptied to zero. A dispute from a non-client account was refused on chain."
+  "verified": "Three settlement paths on chain. A contested delivery ruled REFUND and the client's balance went 667.9 to 668.0 GEN. A job the worker never delivered was RECLAIMED after its deadline, client 667.8 to 667.9. A delivery the client never answered was claimed as UNCONTESTED after the review window, worker 137.4467 to 137.5467. Wrong-party attempts at each guard were refused without moving the fee."
 }

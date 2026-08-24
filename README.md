@@ -3,7 +3,7 @@
 **An escrow where contesting the work actually moves the money.**
 
 * **App:** https://recourse-escrow.vercel.app
-* **Contract:** `0xc7aAce456c1B040DA82D97cc26aDe0703A8824a3` on GenLayer Studionet
+* **Contract:** `0x52BB8898a9fB322dD89145B031c14f4231E748D9` on GenLayer Studionet
 * Source: [`contracts/recourse.py`](contracts/recourse.py)
 
 ---
@@ -34,6 +34,51 @@ contested it. The round ruled **REFUND**, with this reasoning:
 Nobody confirmed that afterwards. There is no operator step, because an operator
 step would put the party running the market back in the position of deciding,
 which is the arrangement this exists to remove.
+
+## Nobody's money is locked without a way out
+
+A reviewer put it plainly: funds could stay locked when either party stopped
+participating. That was true and it was the worst thing about the contract, so it
+is now the part with the most evidence behind it.
+
+Every job carries two deadlines, both enforced by the chain rather than by
+anybody's agreement. Time is deterministic here, so a deadline costs no
+agreement: every validator sees the same transaction timestamp.
+
+| The failure | The way out | Measured |
+|---|---|---|
+| the worker never delivers | the client calls `reclaim` after the delivery deadline | job #1 went OPEN to RECLAIMED, client 667.8 to **667.9 GEN** |
+| the client never answers a delivery | the worker calls `claim` after the review window | job #2 went DELIVERED to UNCONTESTED, worker 137.4467 to **137.5467 GEN** |
+
+Doing nothing after a delivery is treated as what it is: a choice to accept.
+
+Both guards were tested from the wrong side too. A `reclaim` sent from an account
+that was not the client was refused and the fee did not move. A `claim` sent
+before the review window closed was refused with the seconds remaining, and a
+`reclaim` on a job whose deadline is still a week away is refused the same way.
+
+## The deliverable is pinned
+
+The same reviewer noted that a dispute rested entirely on party-authored text.
+A delivery can now carry a URI and a digest computed off chain, recorded in the
+same transaction as the delivery and passed into the ruling.
+
+The contract cannot fetch the artifact, and a round that tried would time out on
+this validator set. So it does the one thing it can: it fixes **what was handed
+in**, so the thing being argued about cannot be swapped afterwards. That does not
+prove the work is good. It removes the move where a party changes the artifact
+and argues about the new one.
+
+Measured: job #2 was delivered with `sha256:9f2c41a7e0b8d35c` and
+`https://example.com/summary.md`, both stored and shown beside the outcome.
+
+## A note for anyone integrating
+
+**The payout is eventually consistent.** A job reaches RECLAIMED, UNCONTESTED,
+RELEASED or REFUNDED in the transaction that settles it, and the balance moves
+about a minute later. Read the status, not the balance, if you are checking
+immediately: measured twice here, the status changed first and the transfer
+landed on the following poll.
 
 ## Access control, also measured
 
